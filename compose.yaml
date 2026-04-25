@@ -17,6 +17,8 @@ services:
     tmpfs:
       - /home/global/workspace/tmp:uid=${UID:-1000},gid=${GID:-1000}
       - /home/global/workspace/log:uid=${UID:-1000},gid=${GID:-1000}
+    ports:
+      - "127.0.0.1:3002:3000" # rails (host:3002 -> container:3000)
     volumes:
       - type: bind
         source: .
@@ -242,19 +244,6 @@ services:
       - master
       - volume
       - filer
-    restart: unless-stopped
-
-  cloudflare-tunnel:
-    image: cloudflare/cloudflared:latest
-    depends_on:
-      - core
-    command: tunnel run --token ${CLOUDFLARED_TOKEN}
-    environment:
-      CLOUDFLARED_TOKEN: ${CLOUDFLARED_TOKEN}
-    networks:
-      - frontend
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
     restart: unless-stopped
 
 networks:

@@ -1,0 +1,121 @@
+{
+  "name": "umaxica-app-global-dc",
+  "dockerComposeFile": ["../compose.yaml", "./compose.override.yml"],
+  "service": "core",
+  "remoteUser": "global",
+  "containerUser": "global",
+  "workspaceFolder": "/home/global/workspace",
+  "overrideCommand": true,
+  "forwardPorts": [3002],
+  "remoteEnv": { "EDITOR": "code --wait --reuse-window", "DEBUGGER_DISABLE": "1" },
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "Shopify.ruby-lsp",
+        "bradlc.vscode-tailwindcss",
+        "ms-azuretools.vscode-docker",
+        "GitHub.vscode-pull-request-github",
+        "ms-vscode.remote-explorer",
+        "rubocop.vscode-rubocop",
+        "openai.chatgpt",
+        "anthropic.claude-code",
+        "anthropic.claude-code",
+        "-sorbet.sorbet-vscode-extension",
+        "-dbaeumer.vscode-eslint",
+        "-esbenp.prettier-vscode",
+        "-eamodio.gitlens",
+        "-KoichiSasada.vscode-rdbg",
+        "-sorbet.sorbet-vscode-extension",
+        "-GitHub.copilot",
+        "-GitHub.copilot-chat"
+      ],
+      "settings": {
+        "extensions.verifySignature": false,
+        "terminal.integrated.defaultProfile.linux": "bash",
+        "terminal.integrated.profiles.linux": {
+          "bash": { "path": "/bin/bash" },
+          "zsh": { "path": "/bin/zsh" }
+        },
+        "editor.formatOnSave": true,
+        "editor.tabSize": 2,
+        "files.trimTrailingWhitespace": true,
+        "files.insertFinalNewline": true,
+        "editor.codeActionsOnSave": {
+          "source.fixAll.eslint": "explicit",
+          "source.fixAll": "explicit"
+        },
+        "files.associations": {
+          "*.erb": "erb",
+          "Procfile*": "shellscript",
+          "compose.yaml": "yaml",
+          "*.yml": "yaml"
+        },
+        "[ruby]": { "editor.defaultFormatter": "Shopify.ruby-lsp" },
+        "[javascript]": { "editor.defaultFormatter": "voidzero.oxfmt" },
+        "[typescript]": { "editor.defaultFormatter": "voidzero.oxfmt" },
+        "ruby.lsp.enabledFeatures": {
+          "codeActions": true,
+          "diagnostics": true,
+          "documentHighlights": true,
+          "documentLink": true,
+          "documentSymbols": true,
+          "foldingRanges": true,
+          "formatting": true,
+          "hover": true,
+          "inlayHint": true,
+          "onTypeFormatting": true,
+          "selectionRanges": true,
+          "semanticHighlighting": true,
+          "completion": true,
+          "codeLens": true,
+          "definition": true,
+          "workspaceSymbol": true,
+          "signatureHelp": true,
+          "typeHierarchy": true
+        },
+        "ruby.lint": { "rubocop": true }
+      }
+    },
+    "jetbrains": {
+      "remoteId": "intellij",
+      "backend": "intellij",
+      "plugins": ["org.jetbrains.plugins.ruby"],
+      "containerEnv": { "DEVCONTAINER_IDE": "jetbrains", "DEVCONTAINER_AUTO_START_BIN_DEV": "0" }
+    }
+  },
+  "shutdownAction": "stopCompose",
+  "containerEnv": {
+    "DEVCONTAINER_AUTO_START_BIN_DEV": "1",
+    "NODE_OPTIONS": "--max-old-space-size=4096",
+    "QT_QPA_PLATFORM": "wayland",
+    "GDK_BACKEND": "wayland",
+    "RUBY_YJIT_ENABLE": "1",
+    "RUBY_YJIT_CALL_THRESHOLD": "10",
+    "RUBY_DEBUG_OPEN": "false"
+  },
+  "updateRemoteUserUID": true,
+  "postStartCommand": "",
+  "features": {
+    "ghcr.io/devcontainers/features/github-cli:1": {},
+    "ghcr.io/marcosbolanos/devcontainer-features/neovim-prebuilt:1": {},
+    "ghcr.io/devcontainers/features/copilot-cli:1": {},
+    "ghcr.io/stu-bell/devcontainer-features/gemini-cli:0": {},
+    "ghcr.io/jsburckhardt/devcontainer-features/codex:1": {},
+    "ghcr.io/jsburckhardt/devcontainer-features/opencode:1": {},
+    "ghcr.io/devcontainers-extra/features/lefthook-asdf:1": {},
+    "ghcr.io/jasonthedeveloper/features/trivy:1": {},
+    "ghcr.io/audacioustux/devcontainers/bun:1": {}
+  },
+  "mounts": [
+    "source=${localEnv:HOME}/.claude,target=/home/global/.claude,type=bind",
+    "source=${localEnv:HOME}/.claude.json,target=/home/global/.claude.json,type=bind",
+    "source=${localEnv:HOME}/.copilot,target=/home/global/.copilot,type=bind",
+    "source=${localEnv:HOME}/.codex,target=/home/global/.codex,type=bind",
+    "source=${localEnv:HOME}/.gemini,target=/home/global/.gemini,type=bind",
+    "source=${localEnv:HOME}/.config/gh,target=/home/global/.config/gh,type=bind",
+    "source=${localEnv:HOME}/.config/git,target=/home/global/.config/git,type=bind",
+    "source=${localEnv:HOME}/.gitconfig,target=/home/global/.gitconfig,type=bind",
+    "source=${localEnv:HOME}/.ssh,target=/home/global/.ssh,type=bind",
+    "source=${localEnv:HOME}/.config/opencode,target=/home/global/.config/opencode,type=bind"
+  ]
+}
