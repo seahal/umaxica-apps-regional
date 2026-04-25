@@ -1,0 +1,276 @@
+name: umaxica-apps-regional
+
+services:
+  core:
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+      args:
+        COMMIT_HASH: "abcdef"
+        DOCKER_UID: ${UID:-1000}
+        DOCKER_GID: ${GID:-1000}
+    env_file: docker/core/env
+    entrypoint: ["/bin/bash", "/home/global/workspace/docker/core/entrypoint.sh"]
+    command: ["sleep", "infinity"]
+    restart: always
+    user: "${UID:-1000}:${GID:-1000}"
+    tmpfs:
+      - /home/global/workspace/tmp:uid=${UID:-1000},gid=${GID:-1000}
+      - /home/global/workspace/log:uid=${UID:-1000},gid=${GID:-1000}
+    volumes:
+      - type: bind
+        source: .
+        target: /home/global/workspace
+    networks:
+      backend: {}
+      frontend:
+        aliases:
+          - sign.app.localhost
+          - sign.com.localhost
+          - sign.org.localhost
+      observability: {}
+      outer:
+        aliases:
+          - global
+    depends_on:
+      primary:
+        condition: service_healthy
+      replica:
+        condition: service_started
+      valkey:
+        condition: service_healthy
+      otel-collector:
+        condition: service_started
+  kumo:
+    image: ghcr.io/sivchari/kumo:latest
+  primary:
+    image: postgres:18.1-alpine
+    command:
+      - -c
+      - config_file=/etc/postgresql/postgresql.conf
+      - -c
+      - hba_file=/etc/postgresql/pg_hba.conf
+    environment:
+      POSTGRES_USER: root
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: db
+      TZ: UTC
+      POSTGRES_HOST_AUTH_METHOD: trust # dev only
+      POSTGRES_INITDB_WAL_LEVEL: replica
+      POSTGRES_INITDB_MAX_WAL_SENDERS: 10
+      POSTGRES_INITDB_MAX_REPLICATION_SLOTS: 10
+    tmpfs:
+      - /var/lib/postgresql/18
+    volumes:
+      - ./docker/psql-pub/postgresql.conf:/etc/postgresql/postgresql.conf:ro
+      - ./docker/psql-pub/pg_hba.conf:/etc/postgresql/pg_hba.conf:ro
+      - ./docker/psql-pub:/docker-entrypoint-initdb.d:ro
+    networks:
+      - backend
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U root -d db -h 127.0.0.1"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+      start_period: 5s
+
+  replica:
+    image: postgres:18.1-alpine
+    entrypoint: /entrypoint.sh
+    environment:
+      POSTGRES_USER: root
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: db
+      TZ: UTC
+      POSTGRES_HOST_AUTH_METHOD: trust # dev only
+    tmpfs:
+      - /var/lib/postgresql/18
+    volumes:
+      - ./docker/psql-sub/entrypoint.sh:/entrypoint.sh:ro
+      - ./docker/psql-sub/postgresql.conf:/etc/postgresql/postgresql.conf:ro
+      - ./docker/psql-sub/pg_hba.conf:/etc/postgresql/pg_hba.conf:ro
+    depends_on:
+      primary:
+        condition: service_healthy
+    networks:
+      - backend
+    restart: unless-stopped
+
+  valkey:
+    image: valkey/valkey:8.0-alpine3.22
+    networks:
+      - backend
+    volumes:
+      - valkey-volume:/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "valkey-cli", "ping"]
+      interval: 3s
+      timeout: 2s
+      retries: 20
+      start_period: 3s
+
+  kafka:
+    image: confluentinc/cp-kafka:7.9.0
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,CONTROLLER://0.0.0.0:9093
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,CONTROLLER:PLAINTEXT
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@localhost:9093
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      CLUSTER_ID: UmaxicaCluster01
+    networks:
+      - backend
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "kafka-broker-api-versions", "--bootstrap-server", "localhost:9092"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
+  loki:
+    image: grafana/loki:latest
+    command: -config.file=/etc/loki/local-config.yaml
+    volumes:
+      - loki-volume:/tmp/loki
+    networks:
+      - observability
+    restart: unless-stopped
+
+  tempo:
+    image: grafana/tempo:latest
+    command: -config.file=/etc/tempo.yaml
+    volumes:
+      - ./docker/tempo/tempo.yaml:/etc/tempo.yaml:ro
+      - tempo-volume:/tmp/tempo
+    networks:
+      - observability
+    restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana:latest
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+      GF_PATHS_PROVISIONING: /etc/grafana/provisioning
+    volumes:
+      - grafana-volume:/var/lib/grafana
+      - ./docker/grafana/provisioning:/etc/grafana/provisioning
+    networks:
+      - observability
+    depends_on:
+      - loki
+      - tempo
+      - prometheus
+    restart: unless-stopped
+
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:latest
+    volumes:
+      - ./docker/otel-collector/otel-collector-config.yml:/etc/otelcol-contrib/config.yaml:ro
+    networks:
+      - observability
+    depends_on:
+      - tempo
+    restart: unless-stopped
+
+  prometheus:
+    image: prom/prometheus:latest
+    volumes:
+      - ./docker/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-volume:/prometheus
+    networks:
+      - observability
+    restart: unless-stopped
+
+  alloy:
+    image: grafana/alloy:latest
+    volumes:
+      - ./docker/alloy/config.alloy:/etc/alloy/config.alloy:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    command: run /etc/alloy/config.alloy
+    networks:
+      - observability
+    depends_on:
+      - loki
+    restart: unless-stopped
+
+  master:
+    image: chrislusf/seaweedfs:4.03
+    command: "master -ip=master -ip.bind=0.0.0.0"
+    volumes:
+      - master_data:/data
+    networks:
+      - backend
+    restart: unless-stopped
+  volume:
+    image: chrislusf/seaweedfs:4.03
+    command: 'volume -ip=volume -master="master:9333" -ip.bind=0.0.0.0 -port=8080'
+    volumes:
+      - volume_data:/data
+    networks:
+      - backend
+    depends_on:
+      - master
+    restart: unless-stopped
+  filer:
+    image: chrislusf/seaweedfs:4.03
+    command: 'filer -ip=filer -master="master:9333" -ip.bind=0.0.0.0'
+    volumes:
+      - filer_data:/data
+    networks:
+      - backend
+    tty: true
+    stdin_open: true
+    depends_on:
+      - master
+      - volume
+    restart: unless-stopped
+  s3:
+    image: chrislusf/seaweedfs:4.03
+    command: 's3 -filer="filer:8888" -ip.bind=0.0.0.0'
+    networks:
+      - backend
+    depends_on:
+      - master
+      - volume
+      - filer
+    restart: unless-stopped
+
+  cloudflare-tunnel:
+    image: cloudflare/cloudflared:latest
+    depends_on:
+      - core
+    command: tunnel run --token ${CLOUDFLARED_TOKEN}
+    environment:
+      CLOUDFLARED_TOKEN: ${CLOUDFLARED_TOKEN}
+    networks:
+      - frontend
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped
+
+networks:
+  backend: {}
+  frontend: {}
+  observability: {}
+  outer:
+    name: ${OUTER_DOCKER_NETWORK:-umaxica-apps-global_outer}
+    external: ${OUTER_DOCKER_NETWORK_EXTERNAL:-false}
+
+volumes:
+  valkey-volume: {}
+  loki-volume: {}
+  tempo-volume: {}
+  grafana-volume: {}
+  prometheus-volume: {}
+  master_data: {}
+  volume_data: {}
+  filer_data: {}
