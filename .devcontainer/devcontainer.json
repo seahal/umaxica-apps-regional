@@ -1,10 +1,10 @@
 {
-  "name": "umaxica-app-global-dc",
+  "name": "umaxica-app-regional-dc",
   "dockerComposeFile": ["../compose.yaml", "./compose.override.yml"],
   "service": "core",
-  "remoteUser": "global",
-  "containerUser": "global",
-  "workspaceFolder": "/home/global/workspace",
+  "remoteUser": "regional",
+  "containerUser": "regional",
+  "workspaceFolder": "/home/regional/workspace",
   "overrideCommand": true,
   "forwardPorts": [3002],
   "remoteEnv": { "EDITOR": "code --wait --reuse-window", "DEBUGGER_DISABLE": "1" },
@@ -103,19 +103,18 @@
     "ghcr.io/jsburckhardt/devcontainer-features/codex:1": {},
     "ghcr.io/jsburckhardt/devcontainer-features/opencode:1": {},
     "ghcr.io/devcontainers-extra/features/lefthook-asdf:1": {},
-    "ghcr.io/jasonthedeveloper/features/trivy:1": {},
-    "ghcr.io/audacioustux/devcontainers/bun:1": {}
+    "ghcr.io/jasonthedeveloper/features/trivy:1": {}
   },
   "mounts": [
-    "source=${localEnv:HOME}/.claude,target=/home/global/.claude,type=bind",
-    "source=${localEnv:HOME}/.claude.json,target=/home/global/.claude.json,type=bind",
-    "source=${localEnv:HOME}/.copilot,target=/home/global/.copilot,type=bind",
-    "source=${localEnv:HOME}/.codex,target=/home/global/.codex,type=bind",
-    "source=${localEnv:HOME}/.gemini,target=/home/global/.gemini,type=bind",
-    "source=${localEnv:HOME}/.config/gh,target=/home/global/.config/gh,type=bind",
-    "source=${localEnv:HOME}/.config/git,target=/home/global/.config/git,type=bind",
-    "source=${localEnv:HOME}/.gitconfig,target=/home/global/.gitconfig,type=bind",
-    "source=${localEnv:HOME}/.ssh,target=/home/global/.ssh,type=bind",
-    "source=${localEnv:HOME}/.config/opencode,target=/home/global/.config/opencode,type=bind"
+    "source=${localEnv:HOME}/.claude,target=/home/regional/.claude,type=bind",
+    "source=${localEnv:HOME}/.claude.json,target=/home/regional/.claude.json,type=bind",
+    "source=${localEnv:HOME}/.copilot,target=/home/regional/.copilot,type=bind",
+    "source=${localEnv:HOME}/.codex,target=/home/regional/.codex,type=bind",
+    "source=${localEnv:HOME}/.gemini,target=/home/regional/.gemini,type=bind",
+    "source=${localEnv:HOME}/.config/gh,target=/home/regional/.config/gh,type=bind",
+    "source=${localEnv:HOME}/.config/git,target=/home/regional/.config/git,type=bind",
+    "source=${localEnv:HOME}/.gitconfig,target=/home/regional/.gitconfig,type=bind",
+    "source=${localEnv:HOME}/.ssh,target=/home/regional/.ssh,type=bind",
+    "source=${localEnv:HOME}/.config/opencode,target=/home/regional/.config/opencode,type=bind"
   ]
 }

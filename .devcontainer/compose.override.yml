@@ -1,40 +1,40 @@
 services:
   core:
-    container_name: global-devcontainer-core
+    container_name: regional-devcontainer-core
     userns_mode: keep-id
     tmpfs:
-      - /home/global/workspace/tmp:uid=1000,gid=1000
-      - /home/global/workspace/log:uid=1000,gid=1000
+      - /home/regional/workspace/tmp:uid=1000,gid=1000
+      - /home/regional/workspace/log:uid=1000,gid=1000
     environment:
       - DEVCONTAINER=1
       - RUBY_DEBUG_OPEN=false
   primary:
-    container_name: global-devcontainer-primary
+    container_name: regional-devcontainer-primary
     ports: []
   replica:
-    container_name: global-devcontainer-replica
+    container_name: regional-devcontainer-replica
     ports: []
   valkey:
-    container_name: global-devcontainer-valkey
+    container_name: regional-devcontainer-valkey
     ports: []
   master:
-    container_name: global-devcontainer-seaweedfs-master
+    container_name: regional-devcontainer-seaweedfs-master
     ports: []
   volume:
-    container_name: global-devcontainer-seaweedfs-volume
+    container_name: regional-devcontainer-seaweedfs-volume
     ports: []
   filer:
-    container_name: global-devcontainer-seaweedfs-filer
+    container_name: regional-devcontainer-seaweedfs-filer
     ports: []
   s3:
-    container_name: global-devcontainer-seaweedfs-s3
+    container_name: regional-devcontainer-seaweedfs-s3
     ports: []
   loki:
-    container_name: global-devcontainer-loki
+    container_name: regional-devcontainer-loki
     ports: []
   tempo:
-    container_name: global-devcontainer-tempo
+    container_name: regional-devcontainer-tempo
     ports: []
   grafana:
-    container_name: global-devcontainer-grafana
+    container_name: regional-devcontainer-grafana
     ports: []
