@@ -214,9 +214,8 @@ RUN if [ -z "${GITHUB_ACTIONS}" ]; then \
     useradd -l -u "${DOCKER_UID}" -g "${DOCKER_GROUP}" -m -s /bin/bash "${DOCKER_USER}"; \
     echo "${DOCKER_USER}:${DOCKER_USER_PASSWORD:-devpassword}" | chpasswd; \
     echo "${DOCKER_USER} ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers; \
-    chown -R "${DOCKER_UID}:${DOCKER_GID}" "${HOME}"; \
     else \
-    chown -R "${DOCKER_UID}:${DOCKER_GID}" "${HOME}"; \
+    mkdir -p "${HOME}"; \
     fi
 
 # Install pnpm for development use only (available by default on PATH).
@@ -226,5 +225,9 @@ RUN npm install -g pnpm@10.27.0 && \
 # Install Vite+ (unified frontend toolchain: Vite, Vitest, Oxlint, Oxfmt, tsdown)
 RUN curl -fsSL https://vite.plus | bash
 ENV PATH="${HOME}/.vite-plus/bin:${PATH}"
+
+# Final ownership fix for the home directory and workspace
+RUN mkdir -p "${HOME}/workspace" && \
+    chown -R "${DOCKER_UID}:${DOCKER_GID}" "${HOME}"
 
 USER ${DOCKER_USER}
