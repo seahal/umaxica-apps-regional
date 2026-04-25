@@ -205,6 +205,7 @@ RUN apt-get update -qq \
     wget \
     zip \
     socat \
+    bubblewrap \
     netcat-openbsd \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/* /var/cache/apt/archives/* /tmp/* /var/tmp/* "/home/${DOCKER_USER}/"
